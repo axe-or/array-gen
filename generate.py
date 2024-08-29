@@ -5,7 +5,7 @@ template<typename T, isize N>
 constexpr auto operator$Op(Array<T, N> const& a, Array<T, N> const& b){
     Array<$Type, N> c;
     for(isize i = 0; i < N; i++){
-        c[i] = a $Op b;
+        c[i] = a.data[i] $Op b.data[i];
     }
     return c;
 }
@@ -15,7 +15,7 @@ template<typename T, isize N>
 constexpr auto operator$Op(Array<T, N> const& a){
     Array<$Type, N> c;
     for(isize i = 0; i < N; i++){
-        c[i] = $Op a;
+        c[i] = $Op a.data[i];
     }
     return c;
 }
