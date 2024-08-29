@@ -29,24 +29,10 @@ def binary(t, op):
 def unary(t, op):
     return whitespace.sub(' ', unary_template.replace('$Type', t).replace('$Op', op))
 
-bin_arith_ops = [
-    '+', '-', '*', '/', '%',
-    '&', '|', '^', '<<', '>>',
-]
-
-bin_logic_ops = [
-    '&&', '||', '==', '!=',
-    '>', '>=', '<', '<=',
-]
-
-un_arith_ops = [
-    '+', '-', '~',
-]
-
-un_logic_ops = [
-    
-    '!',
-]
+bin_arith_ops = ['+', '-', '*', '/', '%', '&', '|', '^', '<<', '>>' ]
+bin_logic_ops = [ '&&', '||', '==', '!=', '>', '>=', '<', '<=' ]
+un_arith_ops = [ '+', '-', '~', ]
+un_logic_ops = [ '!']
 
 lines = []
 lines += [binary('T', op)    for op in bin_arith_ops]
