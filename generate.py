@@ -1,43 +1,66 @@
-from re import compile as re_compile
+ARR_TYPE = 'array'
 
-binary_template = '''
-template<typename T, isize N>
-constexpr auto operator$Op(Array<T, N> const& a, Array<T, N> const& b){
-    Array<$Type, N> c;
-    for(isize i = 0; i < N; i++){
-        c[i] = a.data[i] $Op b.data[i];
-    }
-    return c;
+bin_templ = '''
+template<typename T, int N> constexpr $ARR<$OUT, N> operator$OP($ARR<T,N> a, $ARR<T,N> b){
+\t$ARR<$OUT, N> r{};
+\tfor(int i = 0; i < N; i += 1){
+\t\tr[i] = a[i] $OP b[i];
+\t}
+\treturn r;
 }
 '''
-unary_template = '''
-template<typename T, isize N>
-constexpr auto operator$Op(Array<T, N> const& a){
-    Array<$Type, N> c;
-    for(isize i = 0; i < N; i++){
-        c[i] = $Op a.data[i];
-    }
-    return c;
+bin_scalar_templ_a = '''
+template<typename T, int N> constexpr $ARR<$OUT, N> operator$OP($ARR<T,N> a, T s){
+\t$ARR<$OUT, N> r{};
+\tfor(int i = 0; i < N; i += 1){
+\t\tr[i] = a[i] $OP s;
+\t}
+\treturn r;
 }
 '''
+bin_scalar_templ_b = '''
+template<typename T, int N> constexpr $ARR<$OUT, N> operator$OP(T s, $ARR<T,N> a){
+\t$ARR<$OUT, N> r{};
+\tfor(int i = 0; i < N; i += 1){
+\t\tr[i] = s $OP a[i];
+\t}
+\treturn r;
+}
+'''
+unary_templ = '''
+template<typename T, int N> constexpr $ARR<$OUT, N> operator$OP($ARR<T,N> a){
+\t$ARR<$OUT, N> r{};
+\tfor(int i = 0; i < N; i += 1){
+\t\tr[i] = $OP a[i];
+\t}
+\treturn r;
+}
+'''
+def arith_bin(op):
+    return '\n'.join([bin_templ, bin_scalar_templ_a, bin_scalar_templ_b]).replace('$OP', op).replace('$OUT', 'T')
 
-whitespace = re_compile(r'\s+')
+def arith_unary(op):
+    return unary_templ.replace('$OP', op).replace('$OUT', 'T')
 
-def binary(t, op):
-    return whitespace.sub(' ', binary_template.replace('$Type', t).replace('$Op', op))
+def logic_bin(op):
+    return bin_templ.replace('$OP', op).replace('$OUT', 'bool')
 
-def unary(t, op):
-    return whitespace.sub(' ', unary_template.replace('$Type', t).replace('$Op', op))
+def logic_unary(op):
+    return unary_templ.replace('$OP', op).replace('$OUT', 'bool')
 
-bin_arith_ops = ['+', '-', '*', '/', '%', '&', '|', '^', '<<', '>>' ]
-bin_logic_ops = [ '&&', '||', '==', '!=', '>', '>=', '<', '<=' ]
-un_arith_ops = [ '+', '-', '~', ]
-un_logic_ops = [ '!']
+ab = [ arith_bin(op) for op in ['+', '-', '*', '/', '%',  '&', '|', '^'] ]
+au = [ arith_unary(op) for op in ['+', '-', '~'] ]
+lb = [ logic_bin(op) for op in ['&&', '||', '==', '!=', '>=', '<=', '>', '<'] ]
+lu = [ logic_unary(op) for op in ['!'] ]
 
-lines = []
-lines += [binary('T', op)    for op in bin_arith_ops]
-lines += [binary('bool', op) for op in bin_logic_ops]
-lines += [unary('T', op)    for op in un_arith_ops]
-lines += [unary('bool', op) for op in un_logic_ops]
+decls = ab + au + lb + lu
 
-print('\n'.join(lines))
+decls.insert(0, '''template<typename T, int N>
+struct $ARR {
+\tT data[N];
+\tconstexpr T& operator[](int i){ return data[i]; }
+\tconstexpr T const& operator[](int i) const { return data[i]; }
+};\n
+''')
+decls = '\n'.join(decls).replace('$ARR', ARR_TYPE).replace('\n\n', '\n').replace('\n\n', '\n')
+print(decls)
